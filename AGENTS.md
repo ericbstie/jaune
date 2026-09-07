@@ -15,6 +15,6 @@ Treat the prompt as working context, not automatic output. Include prompt wordin
 
 Examples:
 
-- In a README or UI, describe the product or feature directly. Do not name a product mentioned only as shorthand for the requested behaviour.
+- In a README or UI, describe the product or feature directly. Do not name a product merely because it appeared in the prompt. Name it only when its relationship to the artifact's subject is part of what the audience needs to know.
 - In a code comment, explain the code's non-obvious purpose or behaviour, not an instruction given to the agent.
 - In a commit message, state the change made, not that it was requested.
