@@ -1,5 +1,3 @@
 # Jaune
 
-An open-source, self-hosted coding agent and graphical interface.
-
-Use existing subscriptions and provider accounts, including Codex, Claude, and OpenRouter, through one interface.
+A self-hosted graphical interface for coding agents. Connect your existing Codex, Claude, and OpenRouter accounts in one place.
