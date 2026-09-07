@@ -1,5 +1,5 @@
 # Jaune
 
-An open-source, self-hosted version of Codex and its GUI.
+An open-source, self-hosted coding agent and graphical interface.
 
-Like T3 Chat, but free and self-hosted. It provides one interface for existing subscriptions and providers, including Codex, Claude, and OpenRouter.
+Use existing subscriptions and provider accounts, including Codex, Claude, and OpenRouter, through one interface.
