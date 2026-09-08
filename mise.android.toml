@@ -1,0 +1,2 @@
+[env]
+NDK_HOME = "{{env.ANDROID_HOME}}/ndk/27.2.12479018"
