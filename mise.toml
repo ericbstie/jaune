@@ -61,6 +61,7 @@ run = [
   "taplo fmt --check mise.toml mise.android.toml src-tauri/Cargo.toml",
   "tsc --noEmit",
   "oxlint --deny-warnings --report-unused-disable-directives-severity error src scripts tests",
+  "bun audit",
   "bun test src",
   "cargo fmt --manifest-path src-tauri/Cargo.toml --check",
   "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
