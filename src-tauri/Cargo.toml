@@ -1,0 +1,30 @@
+[package]
+name = "jaune"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "jaune_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[lints.rust]
+warnings = "deny"
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
