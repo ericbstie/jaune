@@ -26,7 +26,7 @@ mise run dev
 | `mise run format`        | Format project files and Rust sources.                                                                                                   |
 | `mise run test:gui`      | Check the production frontend and save screenshots in `.generated/`.                                                                     |
 
-Bun manages application dependencies and runs tests. mise manages CLI tools and their pinned versions, including the native Tauri CLI. Add CLI tools with `mise use --pin npm:<tool>`.
+Bun manages application dependencies and runs tests. Node is pinned only for the npm CLI tools that require it. mise manages CLI tools and their pinned versions, including the native Tauri CLI. Add CLI tools with `mise use --pin npm:<tool>`.
 
 TypeScript enables strict mode, checked indexed access, exact optional properties and the additional compiler safety checks in `tsconfig.json`. Oxlint enables all rule categories and type-aware linting. Explicit exceptions support async code, the automatic JSX transform, named exports and framework objects. Oxfmt controls formatting and import order. Taplo formats TOML. Rust warnings and Clippy's all, pedantic and nursery groups fail checks.
 
