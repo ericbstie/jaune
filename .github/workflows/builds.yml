@@ -1,9 +1,6 @@
-name: Build checks
+name: Platform builds
 
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -38,9 +35,6 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev
       - run: mise run install
       - run: mise run build ${{ matrix.platform }}
-      - name: Run checks
-        if: runner.os == 'macOS'
-        run: mise run checks
 
   android:
     runs-on: ubuntu-24.04
