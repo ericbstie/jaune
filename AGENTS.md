@@ -31,4 +31,5 @@ Examples:
 - Prefer Oxlint and Oxfmt when they integrate cleanly. Use Biome if they do not.
 - Enable the strictest practical formatting, linting, and type-checking options, including checked indexed access.
 - Prefer Bun's built-in WebView for browser automation and visual GUI verification when it works reliably.
+- Always run the formatter and linter before committing.
 - Write semantic commit messages following Conventional Commits, such as `feat:`, `fix:`, `test:`, and `chore:`.
