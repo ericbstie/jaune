@@ -4,7 +4,7 @@ const platform = Bun.argv[2] ?? "native";
 
 switch (platform) {
   case "native": {
-    await $`tauri build --debug --no-bundle`;
+    await $`cargo tauri build --debug --no-bundle`;
     break;
   }
   case "linux":
@@ -22,12 +22,12 @@ switch (platform) {
         `Build ${platform} on its native operating system, or use mise run build all.`,
       );
     }
-    await $`tauri build --debug --no-bundle`;
+    await $`cargo tauri build --debug --no-bundle`;
     break;
   }
   case "android": {
-    await $`tauri android init --ci`;
-    await $`tauri android build --debug --apk --target aarch64 --ci`;
+    await $`cargo tauri android init --ci`;
+    await $`cargo tauri android build --debug --apk --target aarch64 --ci`;
     break;
   }
   case "apple":
@@ -35,8 +35,8 @@ switch (platform) {
     if (process.platform !== "darwin") {
       throw new Error("iOS builds require macOS and Xcode.");
     }
-    await $`tauri ios init --ci`;
-    await $`tauri ios build --debug --target aarch64-sim --ci`;
+    await $`cargo tauri ios init --ci`;
+    await $`cargo tauri ios build --debug --target aarch64-sim --ci`;
     break;
   }
   case "all": {

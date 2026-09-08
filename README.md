@@ -26,12 +26,12 @@ mise run dev
 | `mise run format`        | Format project files and Rust sources.                                                                                                   |
 | `mise run test:gui`      | Check the production frontend and save screenshots in `.generated/`.                                                                     |
 
-Bun manages application dependencies and runs tests. mise manages CLI tools and their pinned versions. Add CLI tools with `mise use --pin npm:<tool>`.
+Bun manages application dependencies and runs tests. mise manages CLI tools and their pinned versions, including the native Tauri CLI. Add CLI tools with `mise use --pin npm:<tool>`.
 
-TypeScript enables strict mode, checked indexed access, exact optional properties and the additional compiler safety checks in `tsconfig.json`. Oxlint enables all rule categories and type-aware linting. Explicit exceptions support async code, the automatic JSX transform, named exports and framework objects. Oxfmt controls formatting and import order. Rust warnings and Clippy's all, pedantic and nursery groups fail checks.
+TypeScript enables strict mode, checked indexed access, exact optional properties and the additional compiler safety checks in `tsconfig.json`. Oxlint enables all rule categories and type-aware linting. Explicit exceptions support async code, the automatic JSX transform, named exports and framework objects. Oxfmt controls formatting and import order. Taplo formats TOML. Rust warnings and Clippy's all, pedantic and nursery groups fail checks.
 
 The GUI test uses Bun's experimental WebView API. macOS uses system WebKit. Linux and Windows need Chrome, Chromium or Edge. Screenshots are written to `.generated/desktop.png` and `.generated/mobile.png`. These tests exercise the browser frontend. Native window behavior can be inspected with Tauri's development WebView inspector.
 
 Use `mise.local.toml` for machine-specific environment variables. For Android, set `ANDROID_HOME`, `JAVA_HOME` and `NDK_HOME` there. The CI Android environment uses `mise.android.toml` to select its installed NDK. No `.env` file is needed.
 
-GitHub Actions checks Linux, Windows, macOS, Android and iOS builds on pushes and pull requests. It runs the full check suite on macOS. Build outputs stay on the runner and are discarded when the job finishes.
+GitHub Actions checks Linux, Windows, macOS, Android and iOS builds on pushes to main and pull requests. It runs the full check suite on macOS. Build outputs stay on the runner and are discarded when the job finishes.

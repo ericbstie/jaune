@@ -2,12 +2,13 @@
 bun = "1.4.2"
 "github:cli/cli" = "2.100.0"
 "npm:@tailwindcss/cli" = "4.3.3"
-"npm:@tauri-apps/cli" = "2.11.4"
+"github:tauri-apps/tauri" = "tauri-cli-v2.11.4"
 "npm:oxfmt" = "0.66.0"
 "npm:oxlint" = "1.81.0"
 "npm:oxlint-tsgolint" = "7.0.2001"
 "npm:typescript" = "7.0.2"
 rust = "1.98.1"
+taplo = "0.10.0"
 
 [env]
 RUST_BACKTRACE = "1"
@@ -31,24 +32,29 @@ run = "mise run web:css:watch ::: web:serve"
 
 [tasks."web:build"]
 depends = ["web:css"]
-run = "bun build src/index.html --outdir dist --minify --define 'process.env.NODE_ENV=\"production\"'"
+run = "bun build src/index.html --outdir dist --production"
 
 [tasks.dev]
-run = "tauri dev"
+run = "cargo tauri dev"
 
 [tasks.build]
-run = "bun scripts/build.ts {{arg(name='platform', default='native')}}"
+run = "bun scripts/build.ts"
 
 [tasks.release]
-run = "tauri build --no-bundle"
+run = "cargo tauri build --no-bundle"
 
 [tasks.format]
-run = ["oxfmt --write .", "cargo fmt --manifest-path src-tauri/Cargo.toml"]
+run = [
+  "oxfmt --write .",
+  "taplo fmt mise.toml mise.android.toml src-tauri/Cargo.toml",
+  "cargo fmt --manifest-path src-tauri/Cargo.toml",
+]
 
 [tasks.checks]
 depends = ["web:build"]
 run = [
   "oxfmt --check .",
+  "taplo fmt --check mise.toml mise.android.toml src-tauri/Cargo.toml",
   "tsc --noEmit",
   "oxlint --deny-warnings --report-unused-disable-directives-severity error src scripts tests",
   "bun test src",
@@ -61,4 +67,3 @@ run = [
 [tasks."test:gui"]
 depends = ["web:build"]
 run = "bun test tests"
-
