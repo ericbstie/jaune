@@ -11,6 +11,8 @@ interface MessagePanelProps {
   onBusy: (busy: boolean) => void;
 }
 
+const initialStatus = { error: "", ready: false, reply: "", sending: false };
+
 function MessagePanel({
   client,
   conversationId,
@@ -18,7 +20,7 @@ function MessagePanel({
   onBusy,
 }: MessagePanelProps): ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [status, setStatus] = useState({ error: "", ready: false, reply: "", sending: false });
+  const [status, setStatus] = useState(initialStatus);
   const abort = useRef<AbortController | null>(null);
   const [draft, setDraft] = useState("");
   useEffect(() => {
@@ -70,7 +72,10 @@ function MessagePanel({
       const message = await saveDraft();
       await answer(message, controller.signal);
     } catch {
-      setStatus((current) => ({ ...current, error: "Could not complete reply.", reply: "" }));
+      setStatus((current) => ({
+        ...current,
+        error: "Could not complete reply.",
+      }));
     } finally {
       setStatus((current) => ({ ...current, reply: "", sending: false }));
       abort.current = null;
@@ -82,13 +87,21 @@ function MessagePanel({
     if (draft.trim().length === 0 || status.sending || !status.ready) {
       return;
     }
-    setStatus((current) => ({ ...current, error: "", reply: "", sending: true }));
+    setStatus((current) => ({
+      ...current,
+      error: "",
+      sending: true,
+    }));
     onBusy(true);
     void persist();
   }
   return (
     <>
-      <MessageList messages={messages} ready={status.ready} reply={status.reply} />
+      <MessageList
+        messages={messages}
+        ready={status.ready}
+        reply={status.reply}
+      />
       {status.error.length > 0 && <p role="alert">{status.error}</p>}
       <MessageForm
         draft={draft}
