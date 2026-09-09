@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM"],
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "types": ["bun"],
@@ -20,8 +20,8 @@
     "allowUnusedLabels": false,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"]
+  "include": ["src", "tests"]
 }
