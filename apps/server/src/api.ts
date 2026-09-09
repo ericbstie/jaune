@@ -85,6 +85,21 @@ async function removeConversation(
   return new Response(null, { status: 204 });
 }
 
+function conversationRoute(
+  request: Request,
+  options: { store: ConversationStore; generate: ReplyProvider; groups: Record<string, string | undefined> },
+): Promise<Response> | Response {
+  const conversationId = options.groups["id"] ?? "";
+
+  if (options.groups["action"] === "/reply") {
+    return replyRoute(request, { store: options.store, conversationId, generate: options.generate });
+  }
+  if (options.groups["action"] === "/messages") {
+    return messageRoute(request, options.store, conversationId);
+  }
+  return removeConversation(request, options.store, conversationId);
+}
+
 function handleConversations(
   request: Request,
   store: ConversationStore,
@@ -98,15 +113,7 @@ function handleConversations(
   if (!match?.groups) {
     return new Response(null, { status: 404 });
   }
-  const conversationId = match.groups["id"] ?? "";
-
-  if (match.groups["action"] === "/reply") {
-    return replyRoute(request, store, conversationId, generate);
-  }
-  if (match.groups["action"] === "/messages") {
-    return messageRoute(request, store, conversationId);
-  }
-  return removeConversation(request, store, conversationId);
+  return conversationRoute(request, { generate, groups: match.groups, store });
 }
 
 export { handleConversations, parseContent };

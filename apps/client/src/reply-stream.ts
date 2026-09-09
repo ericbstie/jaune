@@ -12,34 +12,28 @@ function readEvent(value: unknown, onDelta: (delta: string) => void): unknown {
   return undefined;
 }
 
+function splitLines(state: { buffer: string }, text: string): string[] {
+  const lines = (state.buffer + text).split("\n");
+  state.buffer = lines.pop() ?? "";
+  return lines;
+}
+
 async function readReply(
   body: ReadableStream<Uint8Array>,
   onDelta: (delta: string) => void,
 ): Promise<unknown> {
-  const reader = body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
-  try {
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) {
-        throw new Error("Reply stream ended before completion");
-      }
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        const event: unknown = JSON.parse(line);
-        const message = readEvent(event, onDelta);
-        if (message !== undefined) {
-          return message;
-        }
+  const state = { buffer: "" };
+  for await (const chunk of body) {
+    for (const line of splitLines(state, decoder.decode(chunk, { stream: true }))) {
+      const event: unknown = JSON.parse(line);
+      const message = readEvent(event, onDelta);
+      if (message !== undefined) {
+        return message;
       }
     }
-  } finally {
-    await reader.cancel();
-    reader.releaseLock();
   }
+  throw new Error("Reply stream ended before completion");
 }
 
 export { readReply };

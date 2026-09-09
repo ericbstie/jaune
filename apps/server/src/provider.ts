@@ -13,6 +13,26 @@ interface ProviderConfig {
   fetch: (url: string, options: RequestInit) => Promise<Response>;
 }
 
+function readContent(delta: unknown): string {
+  if (typeof delta !== "object" || delta === null || !("content" in delta) || delta.content === null) {
+    return "";
+  }
+  if (typeof delta.content !== "string") {
+    throw new TypeError("Invalid provider content");
+  }
+  return delta.content;
+}
+
+function readChoice(choice: unknown): string {
+  if (typeof choice !== "object" || choice === null) {
+    return "";
+  }
+  if ("finish_reason" in choice && choice.finish_reason === "error") {
+    throw new Error("Provider generation failed");
+  }
+  return readContent("delta" in choice ? choice.delta : undefined);
+}
+
 function readDelta(value: unknown): string {
   if (typeof value !== "object" || value === null || "error" in value) {
     throw new Error("Provider returned an error");
@@ -20,27 +40,14 @@ function readDelta(value: unknown): string {
   if (!("choices" in value) || !Array.isArray(value.choices)) {
     throw new Error("Invalid provider response");
   }
-  const choice: unknown = value.choices[0];
-  if (typeof choice !== "object" || choice === null) {
-    return "";
-  }
-  if ("finish_reason" in choice && choice.finish_reason === "error") {
-    throw new Error("Provider generation failed");
-  }
-  if (!("delta" in choice) || typeof choice.delta !== "object" || choice.delta === null) {
-    return "";
-  }
-  if (!("content" in choice.delta) || choice.delta.content === null) {
-    return "";
-  }
-  if (typeof choice.delta.content !== "string") {
-    throw new Error("Invalid provider content");
-  }
-  return choice.delta.content;
+  return readChoice(value.choices[0]);
 }
 
-function createProvider(config: ProviderConfig): ReplyProvider {
-  return async function* generate(messages, signal): AsyncGenerator<string> {
+async function openStream(
+  config: ProviderConfig,
+  messages: readonly PromptMessage[],
+  signal: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> {
     const response = await config.fetch("https://openrouter.ai/api/v1/chat/completions", {
       body: JSON.stringify({ messages, model: config.model, stream: true }),
       headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
@@ -51,7 +58,13 @@ function createProvider(config: ProviderConfig): ReplyProvider {
       await response.body?.cancel();
       throw new Error(`Provider request failed: ${response.status}`);
     }
-    for await (const event of readEvents(response.body)) {
+    return response.body;
+}
+
+function createProvider(config: ProviderConfig): ReplyProvider {
+  return async function* generate(messages, signal): AsyncGenerator<string> {
+    const body = await openStream(config, messages, signal);
+    for await (const event of readEvents(body)) {
       if (event === "[DONE]") {
         return;
       }

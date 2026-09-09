@@ -93,19 +93,17 @@ function createClient(
   }
   async function reply(
     id: string,
-    messageId: string,
-    onDelta: (delta: string) => void,
-    signal: AbortSignal,
+    options: { messageId: string; onDelta: (delta: string) => void; signal: AbortSignal },
   ): Promise<Message> {
     const response = await requestResponse(`/${id}/reply`, {
-      body: JSON.stringify({ messageId }),
+      body: JSON.stringify({ messageId: options.messageId }),
       method: "POST",
-      signal,
+      signal: options.signal,
     });
     if (response.body === null) {
       throw new Error("Missing reply stream");
     }
-    return parseMessage(await readReply(response.body, onDelta));
+    return parseMessage(await readReply(response.body, options.onDelta));
   }
   async function list(): Promise<Conversation[]> {
     return parseList(await request(""), parseConversation);

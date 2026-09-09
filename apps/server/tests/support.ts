@@ -27,7 +27,7 @@ async function seedSession(auth: Auth, email: string): Promise<Session> {
 }
 
 async function* fakeReply(): AsyncGenerator<string> {
-  yield "Test ";
+  yield await Promise.resolve("Test ");
   yield "reply";
 }
 
