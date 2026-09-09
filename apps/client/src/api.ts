@@ -84,7 +84,10 @@ function createClient(
     }
     return response;
   }
-  async function request(path: string, options: RequestInit = {}): Promise<unknown> {
+  async function request(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<unknown> {
     const response = await requestResponse(path, options);
     return await response.json();
   }

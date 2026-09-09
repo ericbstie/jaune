@@ -7,14 +7,22 @@ interface MessageListProps {
   reply: string;
 }
 
-function MessageList({ messages, ready, reply }: MessageListProps): ReactElement {
+function MessageList({
+  messages,
+  ready,
+  reply,
+}: MessageListProps): ReactElement {
   return (
-    <ol aria-label="Messages" aria-busy={!ready} className="flex-1 space-y-4 overflow-y-auto">
+    <ol
+      aria-label="Messages"
+      aria-busy={!ready}
+      className="flex-1 space-y-4 overflow-y-auto"
+    >
       {messages.map((message) => (
         <li
           key={message.id}
           aria-label={message.role}
-          className="whitespace-pre-wrap break-words"
+          className="whitespace-pre-wrap break-words aria-[label=user]:text-right"
         >
           {message.content}
         </li>

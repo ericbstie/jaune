@@ -36,8 +36,9 @@ const generate = createProvider({
 });
 await migrate(database);
 Bun.serve({
-  fetch: async (request) => await handleRequest(request, { auth, database, generate, trustedOrigins }),
-  idleTimeout: 0,
+  fetch: async (request) =>
+    await handleRequest(request, { auth, database, generate, trustedOrigins }),
+  idleTimeout: 120,
   maxRequestBodySize: 128_000,
   port: Number(Bun.env["PORT"] ?? "3000"),
 });

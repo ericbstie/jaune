@@ -16,7 +16,8 @@ async function readReply(
   body: ReadableStream<Uint8Array>,
   onDelta: (delta: string) => void,
 ): Promise<unknown> {
-  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
   let buffer = "";
   try {
     for (;;) {
@@ -24,7 +25,7 @@ async function readReply(
       if (done) {
         throw new Error("Reply stream ended before completion");
       }
-      buffer += value;
+      buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {

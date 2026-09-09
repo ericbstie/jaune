@@ -31,7 +31,10 @@ async function* fakeReply(): AsyncGenerator<string> {
   yield "reply";
 }
 
-async function createTestServer(port = 0, generate: ReplyProvider = fakeReply): Promise<TestServer> {
+async function createTestServer(
+  port = 0,
+  generate: ReplyProvider = fakeReply,
+): Promise<TestServer> {
   const url = Bun.env["TEST_DATABASE_URL"];
   if (url === undefined || url.length === 0) {
     throw new Error("TEST_DATABASE_URL must point to a test PostgreSQL database");
@@ -61,7 +64,8 @@ async function createTestServer(port = 0, generate: ReplyProvider = fakeReply): 
       trustedOrigins,
     });
     server.reload({
-      fetch: async (request) => await handleRequest(request, { auth, database, generate, trustedOrigins }),
+      fetch: async (request) =>
+        await handleRequest(request, { auth, database, generate, trustedOrigins }),
     });
     const session = await seedSession(auth, `${schema}@example.com`);
     const otherSession = await seedSession(auth, `other-${schema}@example.com`);

@@ -22,10 +22,14 @@ async function authenticateConversationRequest(
   if (session === null) {
     return new Response(null, { status: 401 });
   }
-  const response = await handleConversations(request, {
-    database: dependencies.database,
-    userId: session.user.id,
-  }, dependencies.generate);
+  const response = await handleConversations(
+    request,
+    {
+      database: dependencies.database,
+      userId: session.user.id,
+    },
+    dependencies.generate,
+  );
   for (const [name, value] of headers) {
     response.headers.append(name, value);
   }

@@ -1,5 +1,6 @@
 async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
-  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
   let buffer = "";
   let data: string[] = [];
   try {
@@ -8,7 +9,7 @@ async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<str
       if (done) {
         return;
       }
-      buffer += value;
+      buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {

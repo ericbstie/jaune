@@ -26,9 +26,15 @@ jobs:
           brew services start postgresql@17
           "$(brew --prefix postgresql@17)/bin/createdb" jaune_test
       - name: Diagnose formatting
+        env:
+          TEST_DATABASE_URL: postgres://localhost:5432/jaune_test
         run: |
           mise run format
           git diff
+          cd apps/client && oxlint --deny-warnings --report-unused-disable-directives-severity error src scripts tests || true
+          cd ../server && oxlint --deny-warnings --report-unused-disable-directives-severity error src tests || true
+          bun test tests || true
+          cd ../client && bun test tests/reply-stream.test.ts || true
       - run: mise run checks
         env:
           TEST_DATABASE_URL: postgres://localhost:5432/jaune_test

@@ -59,10 +59,20 @@ async function verifyChat(
   await send(view, "First message");
   await waitForMessages(view, ["First message", "Test reply"]);
   await send(view, "Second message");
-  await waitForMessages(view, ["First message", "Test reply", "Second message", "Test reply"]);
+  await waitForMessages(view, [
+    "First message",
+    "Test reply",
+    "Second message",
+    "Test reply",
+  ]);
   await view.reload();
   await view.click("nav button:not(:disabled)");
-  await waitForMessages(view, ["First message", "Test reply", "Second message", "Test reply"]);
+  await waitForMessages(view, [
+    "First message",
+    "Test reply",
+    "Second message",
+    "Test reply",
+  ]);
   await Bun.write(".generated/chat-desktop.png", await view.screenshot());
   await view.resize(mobile.width, mobile.height);
   expect(

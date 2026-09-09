@@ -57,10 +57,11 @@ test(
       const path = `/${id}/messages`;
       expect((await owner(path, post("first"))).status).toBe(created);
       expect((await owner(path, post("second"))).status).toBe(created);
+      await fixture.database`ALTER TABLE message DROP COLUMN role`;
       await migrate(fixture.database);
       expect(await (await owner(path)).json()).toMatchObject([
-        { content: "first" },
-        { content: "second" },
+        { content: "first", role: "user" },
+        { content: "second", role: "user" },
       ]);
       expect(await (await owner()).json()).toMatchObject([{ id, title: "first" }]);
       expect(await (await stranger()).json()).toEqual([]);

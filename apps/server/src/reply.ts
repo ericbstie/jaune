@@ -41,7 +41,10 @@ async function persistReply(options: ReplyOptions): Promise<Message> {
     if (locked.length === 0) {
       throw new Error("Conversation not found");
     }
-    const messages = await getMessages({ database: transaction, userId: store.userId }, conversationId);
+    const messages = await getMessages(
+      { database: transaction, userId: store.userId },
+      conversationId,
+    );
     const latest = messages?.at(-1);
     if (messages === null || latest?.id !== messageId || latest.role !== "user") {
       throw new Error("Message is no longer awaiting a reply");
@@ -59,7 +62,10 @@ async function persistReply(options: ReplyOptions): Promise<Message> {
   });
 }
 
-function streamReply(request: Request, options: Omit<ReplyOptions, "signal" | "onDelta">): Response {
+function streamReply(
+  request: Request,
+  options: Omit<ReplyOptions, "signal" | "onDelta">,
+): Response {
   const abort = new AbortController();
   const encoder = new TextEncoder();
   const signal = AbortSignal.any([request.signal, abort.signal, AbortSignal.timeout(replyTimeout)]);
@@ -74,7 +80,11 @@ function streamReply(request: Request, options: Omit<ReplyOptions, "signal" | "o
         }
       }
       try {
-        const message = await persistReply({ ...options, onDelta: (delta) => emit({ delta }), signal });
+        const message = await persistReply({
+          ...options,
+          onDelta: (delta) => emit({ delta }),
+          signal,
+        });
         emit({ message });
       } catch {
         emit({ error: "Could not generate reply." });
@@ -98,7 +108,12 @@ async function replyRoute(
     return new Response(null, { status: 405 });
   }
   const body: unknown = await request.json().catch(() => null);
-  if (typeof body !== "object" || body === null || !("messageId" in body) || typeof body.messageId !== "string") {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("messageId" in body) ||
+    typeof body.messageId !== "string"
+  ) {
     return new Response(null, { status: 400 });
   }
   const messages = await getMessages(store, conversationId);
