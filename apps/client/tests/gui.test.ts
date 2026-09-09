@@ -57,12 +57,22 @@ async function verifyChat(
   await view.reload();
   await view.click("aside > button:first-child:not(:disabled)");
   await send(view, "First message");
-  await waitForMessages(view, ["First message"]);
+  await waitForMessages(view, ["First message", "Test reply"]);
   await send(view, "Second message");
-  await waitForMessages(view, ["First message", "Second message"]);
+  await waitForMessages(view, [
+    "First message",
+    "Test reply",
+    "Second message",
+    "Test reply",
+  ]);
   await view.reload();
   await view.click("nav button:not(:disabled)");
-  await waitForMessages(view, ["First message", "Second message"]);
+  await waitForMessages(view, [
+    "First message",
+    "Test reply",
+    "Second message",
+    "Test reply",
+  ]);
   await Bun.write(".generated/chat-desktop.png", await view.screenshot());
   await view.resize(mobile.width, mobile.height);
   expect(
@@ -97,7 +107,9 @@ test(
       >`SELECT content FROM message ORDER BY id`;
       expect(rows.map((row) => row.content)).toEqual([
         "First message",
+        "Test reply",
         "Second message",
+        "Test reply",
       ]);
     } finally {
       await frontend.stop(true);

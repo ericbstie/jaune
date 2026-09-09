@@ -1,3 +1,5 @@
+import { replyRoute } from "./reply";
+import type { ReplyProvider } from "./provider";
 import {
   appendMessage,
   createConversation,
@@ -83,24 +85,43 @@ async function removeConversation(
   return new Response(null, { status: 204 });
 }
 
+function conversationRoute(
+  request: Request,
+  options: {
+    store: ConversationStore;
+    generate: ReplyProvider;
+    groups: Record<string, string | undefined>;
+  },
+): Promise<Response> | Response {
+  const conversationId = options.groups["id"] ?? "";
+
+  if (options.groups["action"] === "/reply") {
+    return replyRoute(request, {
+      conversationId,
+      generate: options.generate,
+      store: options.store,
+    });
+  }
+  if (options.groups["action"] === "/messages") {
+    return messageRoute(request, options.store, conversationId);
+  }
+  return removeConversation(request, options.store, conversationId);
+}
+
 function handleConversations(
   request: Request,
   store: ConversationStore,
+  generate: ReplyProvider,
 ): Promise<Response> | Response {
   const path = new URL(request.url).pathname;
   if (path === "/api/conversations") {
     return collectionRoute(request, store);
   }
-  const match = /^\/api\/conversations\/(?<id>[^/]+)(?<messages>\/messages)?$/u.exec(path);
+  const match = /^\/api\/conversations\/(?<id>[^/]+)(?<action>\/messages|\/reply)?$/u.exec(path);
   if (!match?.groups) {
     return new Response(null, { status: 404 });
   }
-  const conversationId = match.groups["id"] ?? "";
-
-  if (match.groups["messages"] !== undefined) {
-    return messageRoute(request, store, conversationId);
-  }
-  return removeConversation(request, store, conversationId);
+  return conversationRoute(request, { generate, groups: match.groups, store });
 }
 
 export { handleConversations, parseContent };

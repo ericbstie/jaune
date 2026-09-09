@@ -1,5 +1,7 @@
+import { MessageForm } from "./message-form";
+import { MessageList } from "./message-list";
 import type { Client, Message } from "./api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactElement, SubmitEvent } from "react";
 
 interface MessagePanelProps {
@@ -8,7 +10,8 @@ interface MessagePanelProps {
   onSent: () => Promise<void>;
   onBusy: (busy: boolean) => void;
 }
-const maximumContentLength = 32_000;
+
+const initialStatus = { error: "", ready: false, reply: "", sending: false };
 
 function MessagePanel({
   client,
@@ -17,10 +20,9 @@ function MessagePanel({
   onBusy,
 }: MessagePanelProps): ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [status, setStatus] = useState(initialStatus);
+  const abort = useRef<AbortController | null>(null);
   const [draft, setDraft] = useState("");
-  const [ready, setReady] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
     async function load(): Promise<void> {
@@ -28,77 +30,85 @@ function MessagePanel({
         const items = await client.messages(conversationId);
         if (active) {
           setMessages(items);
-          setReady(true);
+          setStatus((current) => ({ ...current, ready: true }));
         }
       } catch {
         if (active) {
-          setError("Could not load messages.");
+          setStatus((current) => ({
+            ...current,
+            error: "Could not load messages.",
+          }));
         }
       }
     }
     void load();
     return (): void => {
       active = false;
+      abort.current?.abort();
     };
   }, [client, conversationId]);
+  async function saveDraft(): Promise<Message> {
+    const message = await client.send(conversationId, draft);
+    setMessages((items) => [...items, message]);
+    setDraft("");
+    return message;
+  }
+  async function answer(message: Message, signal: AbortSignal): Promise<void> {
+    const assistant = await client.reply(conversationId, {
+      messageId: message.id,
+      onDelta: (delta) => {
+        setStatus((current) => ({ ...current, reply: current.reply + delta }));
+      },
+      signal,
+    });
+    setMessages((items) => [...items, assistant]);
+    setStatus((current) => ({ ...current, error: "", reply: "" }));
+    await onSent();
+  }
   async function persist(): Promise<void> {
+    const controller = new AbortController();
+    abort.current = controller;
     try {
-      const message = await client.send(conversationId, draft);
-      setMessages((items) => [...items, message]);
-      setDraft("");
-      await onSent();
+      const message = await saveDraft();
+      await answer(message, controller.signal);
     } catch {
-      setError("Could not send message.");
+      setStatus((current) => ({
+        ...current,
+        error: "Could not complete reply.",
+      }));
     } finally {
-      setSending(false);
+      setStatus((current) => ({ ...current, reply: "", sending: false }));
+      abort.current = null;
       onBusy(false);
     }
   }
   function send(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (draft.trim().length === 0 || sending || !ready) {
+    if (draft.trim().length === 0 || status.sending || !status.ready) {
       return;
     }
-    setSending(true);
+    setStatus((current) => ({
+      ...current,
+      error: "",
+      sending: true,
+    }));
     onBusy(true);
-    setError("");
     void persist();
   }
   return (
     <>
-      <ol
-        aria-label="Messages"
-        aria-busy={!ready}
-        className="flex-1 space-y-4 overflow-y-auto"
-      >
-        {messages.map((message) => (
-          <li key={message.id} className="whitespace-pre-wrap break-words">
-            {message.content}
-          </li>
-        ))}
-      </ol>
-      {error.length > 0 && <p role="alert">{error}</p>}
-      <form
-        className="flex gap-2 border-t border-neutral-200 pt-3"
+      <MessageList
+        messages={messages}
+        ready={status.ready}
+        reply={status.reply}
+      />
+      {status.error.length > 0 && <p role="alert">{status.error}</p>}
+      <MessageForm
+        draft={draft}
+        ready={status.ready && !status.sending}
+        onChange={setDraft}
         onSubmit={send}
-      >
-        <input
-          aria-label="Message"
-          className="min-w-0 flex-1 border border-neutral-300 p-2"
-          value={draft}
-          maxLength={maximumContentLength}
-          disabled={!ready || sending}
-          onChange={(event) => {
-            setDraft(event.currentTarget.value);
-          }}
-        />
-        <button
-          type="submit"
-          disabled={!ready || sending || draft.trim().length === 0}
-        >
-          Send
-        </button>
-      </form>
+      />
     </>
   );
 }

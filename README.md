@@ -5,6 +5,8 @@ A self-hosted graphical interface for coding agents. Connect your existing Codex
 
 Create PostgreSQL databases named `jaune` and `jaune_test`. Copy
 `mise.local.example.toml` to `mise.local.toml` and fill in the credentials.
+Set `OPENROUTER_API_KEY` and `OPENROUTER_MODEL` to your OpenRouter API key and model ID.
+The key is used only by the server.
 Generate `BETTER_AUTH_SECRET` with `openssl rand -base64 32`.
 
 Create a Google OAuth web client with this redirect URI:
@@ -19,7 +21,8 @@ and a WebView test that sends messages and reloads their history. Tests use an
 isolated schema in `TEST_DATABASE_URL`, then remove it. The WebView test uses a
 seeded Better Auth session, without contacting Google.
 
-The server stores conversations and messages. It does not generate AI replies.
+The server streams replies from OpenRouter and stores completed assistant replies
+alongside user messages. Failed or interrupted replies are not saved.
 Sessions stay in the app window's session storage; conversation history stays in
 PostgreSQL when the window closes.
 
