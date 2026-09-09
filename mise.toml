@@ -65,6 +65,7 @@ run = [
   "cd apps/server && tsc --noEmit",
   "cd apps/client && oxlint --deny-warnings --report-unused-disable-directives-severity error src scripts tests",
   "cd apps/server && oxlint --deny-warnings --report-unused-disable-directives-severity error src",
+  "bun audit",
   "cd apps/client && bun test src",
   "cargo fmt --manifest-path apps/client/src-tauri/Cargo.toml --check",
   "cargo clippy --manifest-path apps/client/src-tauri/Cargo.toml --all-targets -- -D warnings",
