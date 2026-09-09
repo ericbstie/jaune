@@ -20,4 +20,11 @@ jobs:
         with:
           version: "2026.9.2"
       - run: mise run install
+      - name: Start test PostgreSQL
+        run: |
+          brew install postgresql@17
+          brew services start postgresql@17
+          "$(brew --prefix postgresql@17)/bin/createdb" jaune_test
       - run: mise run checks
+        env:
+          TEST_DATABASE_URL: postgres://localhost:5432/jaune_test

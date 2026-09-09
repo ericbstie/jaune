@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Jaune</title></head>
+  <body>
+    <main>
+      <button id="signin" type="button" hidden>Sign in with Google</button>
+      <section id="approval" hidden>
+        <h1>Sign in to Jaune</h1>
+        <p>Approve only if this code matches the code in Jaune on your device. Do not approve codes sent by someone else.</p>
+        <p id="code"></p>
+        <button id="approve" type="button">Approve</button>
+        <button id="deny" type="button">Deny</button>
+      </section>
+      <p id="status" role="status"></p>
+    </main>
+    <script type="module">
+      const userCode = new URL(location.href).searchParams.get("user_code");
+      const status = document.querySelector("#status");
+      async function api(path, body) {
+        const options = { credentials: "same-origin" };
+        if (body) { options.method = "POST"; options.headers = { "Content-Type": "application/json" }; options.body = JSON.stringify(body); }
+        const response = await fetch(`/api/auth/${path}`, options);
+        if (!response.ok) { throw new Error("Sign-in failed. Try again from Jaune."); }
+        return response.json();
+      }
+      function report(error) { status.textContent = error.message; }
+      async function signIn() {
+        const result = await api("sign-in/social", { provider: "google", callbackURL: location.href, disableRedirect: true });
+        location.assign(result.url);
+      }
+      async function decide(action) {
+        document.querySelector("#approve").disabled = true;
+        document.querySelector("#deny").disabled = true;
+        try {
+          await api(`device/${action}`, { userCode });
+        } finally {
+          document.querySelector("#approve").disabled = false;
+          document.querySelector("#deny").disabled = false;
+        }
+        document.querySelector("#approval").hidden = true;
+        status.textContent = "Return to Jaune.";
+      }
+      async function start() {
+        if (!userCode) { throw new Error("Start sign-in from Jaune."); }
+        const session = await api("get-session");
+        if (!session) { document.querySelector("#signin").hidden = false; return; }
+        const device = await api(`device?user_code=${encodeURIComponent(userCode)}`);
+        if (device.client_id !== "jaune") { throw new Error("Invalid sign-in request."); }
+        document.querySelector("#code").textContent = userCode;
+        document.querySelector("#approval").hidden = false;
+      }
+      document.querySelector("#signin").onclick = () => signIn().catch(report);
+      document.querySelector("#approve").onclick = () => decide("approve").catch(report);
+      document.querySelector("#deny").onclick = () => decide("deny").catch(report);
+      start().catch(report);
+    </script>
+  </body>
+</html>

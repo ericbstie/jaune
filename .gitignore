@@ -4,3 +4,7 @@ dist/
 apps/client/src-tauri/target/
 apps/client/src-tauri/gen/
 mise.local.toml
+
+.env
+.env.*
+!.env.example

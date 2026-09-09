@@ -1,0 +1,15 @@
+{
+  "identifier": "main",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "http://localhost:3000/device?*"
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,10 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts"
   },
+  "dependencies": {
+    "better-auth": "1.7.3",
+    "drizzle-orm": "0.45.2"
+  },
   "devDependencies": {
     "@types/bun": "1.4.1"
   }

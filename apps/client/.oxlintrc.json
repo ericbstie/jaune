@@ -61,6 +61,55 @@
         "ignoreDeclarationSort": true
       }
     ],
-    "eslint/one-var": ["error", "never"]
-  }
+    "eslint/one-var": ["error", "never"],
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "react/todo": "off",
+    "react/jsx-max-depth": [
+      "error",
+      {
+        "max": 4
+      }
+    ],
+    "eslint/max-lines-per-function": [
+      "error",
+      {
+        "max": 100,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "eslint/no-void": [
+      "error",
+      {
+        "allowAsStatement": true
+      }
+    ],
+    "oxc/no-optional-chaining": "off",
+    "oxc/no-rest-spread-properties": "off",
+    "eslint/no-undefined": "off",
+    "eslint/no-ternary": "off",
+    "eslint/no-duplicate-imports": [
+      "error",
+      {
+        "allowSeparateTypeImports": true
+      }
+    ],
+    "typescript/return-await": ["error", "always"],
+    "promise/prefer-await-to-callbacks": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "import/unambiguous": "off"
+      }
+    },
+    {
+      "files": ["tests/**"],
+      "rules": {
+        "eslint/max-statements": "off",
+        "unicorn/no-await-expression-member": "off"
+      }
+    }
+  ]
 }
