@@ -31,7 +31,12 @@
       async function decide(action) {
         document.querySelector("#approve").disabled = true;
         document.querySelector("#deny").disabled = true;
-        await api(`device/${action}`, { userCode });
+        try {
+          await api(`device/${action}`, { userCode });
+        } finally {
+          document.querySelector("#approve").disabled = false;
+          document.querySelector("#deny").disabled = false;
+        }
         document.querySelector("#approval").hidden = true;
         status.textContent = "Return to Jaune.";
       }

@@ -11,6 +11,7 @@ interface SignInProps {
 interface PendingSignIn {
   deviceCode: string;
   userCode: string;
+  verificationURL: string;
   interval: number;
   expiresAt: number;
 }
@@ -133,6 +134,7 @@ async function beginSignIn(
     expiresAt: now() + data.expires_in * millisecondsPerSecond,
     interval: data.interval,
     userCode: data.user_code,
+    verificationURL: data.verification_uri_complete,
   };
 }
 
@@ -182,6 +184,11 @@ function SignIn({ client, openURL, onSignedIn }: SignInProps): ReactElement {
         </button>
         {pending !== null && (
           <p aria-label="Sign-in code">{pending.userCode}</p>
+        )}
+        {pending !== null && (
+          <a href={pending.verificationURL} target="_blank" rel="noreferrer">
+            Sign in with Google
+          </a>
         )}
         {pending !== null && (
           <button

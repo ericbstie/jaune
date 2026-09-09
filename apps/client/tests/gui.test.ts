@@ -86,7 +86,11 @@ test(
     });
     fixture.trustedOrigins.push(frontend.url.origin);
     try {
-      using view = new Bun.WebView({ height: 600, width: 800 });
+      using view = new Bun.WebView({
+        backend: "chrome",
+        height: 600,
+        width: 800,
+      });
       await verifyChat(view, frontend.url.href, fixture.session.token);
       const rows = await fixture.database<
         { content: string }[]

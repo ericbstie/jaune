@@ -1,8 +1,8 @@
 node_modules/
 dist/
 .generated/
-src-tauri/target/
-src-tauri/gen/
+apps/client/src-tauri/target/
+apps/client/src-tauri/gen/
 mise.local.toml
 
 .env
