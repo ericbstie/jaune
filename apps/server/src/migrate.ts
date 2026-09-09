@@ -20,6 +20,10 @@ export async function migrate(database: SQL): Promise<void> {
         content text NOT NULL CHECK (length(btrim(content)) BETWEEN 1 AND 32000)
       )
     `;
+    await transaction`
+      ALTER TABLE message ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'user'
+      CHECK (role IN ('user', 'assistant'))
+    `;
     await transaction`CREATE INDEX IF NOT EXISTS conversation_user ON conversation (user_id, updated_at DESC)`;
     await transaction`CREATE INDEX IF NOT EXISTS message_conversation_id ON message (conversation_id, id)`;
   });

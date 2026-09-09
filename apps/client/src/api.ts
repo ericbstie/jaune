@@ -1,3 +1,4 @@
+import { readReply } from "./reply-stream";
 import { createAuthClient } from "better-auth/client";
 import { deviceAuthorizationClient } from "better-auth/client/plugins";
 
@@ -8,6 +9,7 @@ interface Conversation {
 interface Message {
   id: string;
   content: string;
+  role: "user" | "assistant";
 }
 const sessionKey = "jaune.session";
 
@@ -30,12 +32,14 @@ function parseMessage(value: unknown): Message {
     value === null ||
     !("id" in value) ||
     !("content" in value) ||
+    !("role" in value) ||
+    (value.role !== "user" && value.role !== "assistant") ||
     typeof value.id !== "string" ||
     typeof value.content !== "string"
   ) {
     throw new Error("Invalid message response");
   }
-  return { content: value.content, id: value.id };
+  return { content: value.content, id: value.id, role: value.role };
 }
 function parseList<Item>(
   value: unknown,
@@ -63,10 +67,10 @@ function createClient(
     },
     plugins: [deviceAuthorizationClient()],
   });
-  async function request(
+  async function requestResponse(
     path: string,
     options: RequestInit = {},
-  ): Promise<unknown> {
+  ): Promise<Response> {
     const headers = new Headers({
       Authorization: `Bearer ${storage.getItem(sessionKey) ?? ""}`,
       "Content-Type": "application/json",
@@ -78,7 +82,27 @@ function createClient(
     if (!response.ok) {
       throw new Error(`Request failed: ${response.status}`);
     }
+    return response;
+  }
+  async function request(path: string, options: RequestInit = {}): Promise<unknown> {
+    const response = await requestResponse(path, options);
     return await response.json();
+  }
+  async function reply(
+    id: string,
+    messageId: string,
+    onDelta: (delta: string) => void,
+    signal: AbortSignal,
+  ): Promise<Message> {
+    const response = await requestResponse(`/${id}/reply`, {
+      body: JSON.stringify({ messageId }),
+      method: "POST",
+      signal,
+    });
+    if (response.body === null) {
+      throw new Error("Missing reply stream");
+    }
+    return parseMessage(await readReply(response.body, onDelta));
   }
   async function list(): Promise<Conversation[]> {
     return parseList(await request(""), parseConversation);
@@ -97,7 +121,7 @@ function createClient(
       }),
     );
   }
-  return { auth, create, list, messages, send, storage };
+  return { auth, create, list, messages, reply, send, storage };
 }
 
 type Client = ReturnType<typeof createClient>;

@@ -1,5 +1,6 @@
+import { MessageList } from "./message-list";
 import type { Client, Message } from "./api";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactElement, SubmitEvent } from "react";
 
 interface MessagePanelProps {
@@ -17,6 +18,8 @@ function MessagePanel({
   onBusy,
 }: MessagePanelProps): ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [reply, setReply] = useState("");
+  const abort = useRef<AbortController | null>(null);
   const [draft, setDraft] = useState("");
   const [ready, setReady] = useState(false);
   const [sending, setSending] = useState(false);
@@ -39,17 +42,30 @@ function MessagePanel({
     void load();
     return (): void => {
       active = false;
+      abort.current?.abort();
     };
   }, [client, conversationId]);
   async function persist(): Promise<void> {
+    const controller = new AbortController();
+    abort.current = controller;
     try {
       const message = await client.send(conversationId, draft);
       setMessages((items) => [...items, message]);
       setDraft("");
+      const assistant = await client.reply(
+        conversationId,
+        message.id,
+        (delta) => setReply((text) => text + delta),
+        controller.signal,
+      );
+      setMessages((items) => [...items, assistant]);
+      setReply("");
       await onSent();
     } catch {
-      setError("Could not send message.");
+      setError("Could not complete reply.");
     } finally {
+      setReply("");
+      abort.current = null;
       setSending(false);
       onBusy(false);
     }
@@ -66,17 +82,7 @@ function MessagePanel({
   }
   return (
     <>
-      <ol
-        aria-label="Messages"
-        aria-busy={!ready}
-        className="flex-1 space-y-4 overflow-y-auto"
-      >
-        {messages.map((message) => (
-          <li key={message.id} className="whitespace-pre-wrap break-words">
-            {message.content}
-          </li>
-        ))}
-      </ol>
+      <MessageList messages={messages} ready={ready} reply={reply} />
       {error.length > 0 && <p role="alert">{error}</p>}
       <form
         className="flex gap-2 border-t border-neutral-200 pt-3"

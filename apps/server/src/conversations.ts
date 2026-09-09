@@ -13,6 +13,7 @@ interface Conversation {
 interface Message {
   id: string;
   content: string;
+  role: "user" | "assistant";
 }
 
 async function createConversation({ database, userId }: ConversationStore): Promise<Conversation> {
@@ -42,7 +43,7 @@ async function getMessages(
     return null;
   }
   return await database<Message[]>`
-    SELECT id::text, content FROM message
+    SELECT id::text, content, role FROM message
     WHERE conversation_id = ${conversationId} ORDER BY id
   `;
 }
@@ -67,7 +68,7 @@ async function appendMessage(
     `;
     const [message] = await transaction<Message[]>`
       INSERT INTO message (conversation_id, content) VALUES (${conversationId}, ${content})
-      RETURNING id::text, content
+      RETURNING id::text, content, role
     `;
     if (!message) {
       throw new Error("Message insert returned no row");

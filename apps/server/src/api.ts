@@ -1,3 +1,5 @@
+import { replyRoute } from "./reply";
+import type { ReplyProvider } from "./provider";
 import {
   appendMessage,
   createConversation,
@@ -86,18 +88,22 @@ async function removeConversation(
 function handleConversations(
   request: Request,
   store: ConversationStore,
+  generate: ReplyProvider,
 ): Promise<Response> | Response {
   const path = new URL(request.url).pathname;
   if (path === "/api/conversations") {
     return collectionRoute(request, store);
   }
-  const match = /^\/api\/conversations\/(?<id>[^/]+)(?<messages>\/messages)?$/u.exec(path);
+  const match = /^\/api\/conversations\/(?<id>[^/]+)(?<action>\/messages|\/reply)?$/u.exec(path);
   if (!match?.groups) {
     return new Response(null, { status: 404 });
   }
   const conversationId = match.groups["id"] ?? "";
 
-  if (match.groups["messages"] !== undefined) {
+  if (match.groups["action"] === "/reply") {
+    return replyRoute(request, store, conversationId, generate);
+  }
+  if (match.groups["action"] === "/messages") {
     return messageRoute(request, store, conversationId);
   }
   return removeConversation(request, store, conversationId);

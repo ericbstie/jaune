@@ -1,3 +1,4 @@
+import { createProvider } from "./provider";
 import { SQL } from "bun";
 import { createAuth } from "./auth";
 import { handleRequest } from "./server";
@@ -28,9 +29,15 @@ const auth = createAuth(database, {
   secret: required(Bun.env, "BETTER_AUTH_SECRET"),
   trustedOrigins,
 });
+const generate = createProvider({
+  apiKey: required(Bun.env, "OPENROUTER_API_KEY"),
+  fetch,
+  model: required(Bun.env, "OPENROUTER_MODEL"),
+});
 await migrate(database);
 Bun.serve({
-  fetch: async (request) => await handleRequest(request, { auth, database, trustedOrigins }),
+  fetch: async (request) => await handleRequest(request, { auth, database, generate, trustedOrigins }),
+  idleTimeout: 0,
   maxRequestBodySize: 128_000,
   port: Number(Bun.env["PORT"] ?? "3000"),
 });

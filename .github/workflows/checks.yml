@@ -25,6 +25,10 @@ jobs:
           brew install postgresql@17
           brew services start postgresql@17
           "$(brew --prefix postgresql@17)/bin/createdb" jaune_test
+      - name: Diagnose formatting
+        run: |
+          mise run format
+          git diff
       - run: mise run checks
         env:
           TEST_DATABASE_URL: postgres://localhost:5432/jaune_test

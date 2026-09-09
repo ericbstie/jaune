@@ -1,3 +1,4 @@
+import type { ReplyProvider } from "./provider";
 import { handleConversations } from "./api";
 import devicePage from "./device.html.txt" with { type: "text" };
 import type { Auth } from "./auth";
@@ -5,6 +6,7 @@ import type { SQL } from "bun";
 
 interface ServerDependencies {
   database: SQL;
+  generate: ReplyProvider;
   auth: Auth;
   trustedOrigins: readonly string[];
 }
@@ -23,7 +25,7 @@ async function authenticateConversationRequest(
   const response = await handleConversations(request, {
     database: dependencies.database,
     userId: session.user.id,
-  });
+  }, dependencies.generate);
   for (const [name, value] of headers) {
     response.headers.append(name, value);
   }
