@@ -3,20 +3,22 @@ import { createProvider } from "../src/provider";
 
 function fragmentedResponse(text: string): Response {
   const bytes = new TextEncoder().encode(text);
-  return new Response(new ReadableStream<Uint8Array>({
-    start(controller) {
-      for (const byte of bytes) {
-        controller.enqueue(Uint8Array.of(byte));
-      }
-      controller.close();
-    },
-  }));
+  return new Response(
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const byte of bytes) {
+          controller.enqueue(Uint8Array.of(byte));
+        }
+        controller.close();
+      },
+    }),
+  );
 }
 
 function providerFor(text: string): ReturnType<typeof createProvider> {
   return createProvider({
     apiKey: "test-key",
-    fetch: () => Promise.resolve(fragmentedResponse(text)),
+    fetch: async () => await Promise.resolve(fragmentedResponse(text)),
     model: "test-model",
   });
 }
@@ -34,12 +36,12 @@ test("decodes fragmented UTF-8, comments and multiline SSE data", async () => {
 test("sends model, roles and server credentials to OpenRouter", async () => {
   const generate = createProvider({
     apiKey: "test-key",
-    fetch: (url, options) => {
+    fetch: async (url, options) => {
       expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
       expect(new Headers(options.headers).get("Authorization")).toBe("Bearer test-key");
       expect(options.signal).toBe(signal);
       expect(options.body).toBe(JSON.stringify({ messages, model: "test-model", stream: true }));
-      return Promise.resolve(fragmentedResponse("data: [DONE]\n\n"));
+      return await Promise.resolve(fragmentedResponse("data: [DONE]\n\n"));
     },
     model: "test-model",
   });
@@ -49,12 +51,18 @@ test("sends model, roles and server credentials to OpenRouter", async () => {
 test("rejects provider HTTP errors, mid-stream errors and truncated responses", async () => {
   const failed = createProvider({
     apiKey: "test-key",
-    fetch: () => Promise.resolve(new Response(null, { status: 429 })),
+    fetch: async () => await Promise.resolve(new Response(null, { status: 429 })),
     model: "test-model",
   });
-  expect(await Array.fromAsync(failed(messages, signal)).catch((error: unknown) => error)).toBeInstanceOf(Error);
+  expect(
+    await Array.fromAsync(failed(messages, signal)).catch((error: unknown) => error),
+  ).toBeInstanceOf(Error);
   const interrupted = providerFor('data: {"choices":[{"delta":{"content":"partial"}}]}\n\n');
-  expect(await Array.fromAsync(interrupted(messages, signal)).catch((error: unknown) => error)).toBeInstanceOf(Error);
-  const error = providerFor('data: {"error":{"message":"failed"}}\n\ndata: [DONE]\n\n');
-  expect(await Array.fromAsync(error(messages, signal)).catch((reason: unknown) => reason)).toBeInstanceOf(Error);
+  expect(
+    await Array.fromAsync(interrupted(messages, signal)).catch((error: unknown) => error),
+  ).toBeInstanceOf(Error);
+  const failedStream = providerFor('data: {"error":{"message":"failed"}}\n\ndata: [DONE]\n\n');
+  expect(
+    await Array.fromAsync(failedStream(messages, signal)).catch((error: unknown) => error),
+  ).toBeInstanceOf(Error);
 });

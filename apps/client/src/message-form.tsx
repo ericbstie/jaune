@@ -8,9 +8,17 @@ interface MessageFormProps {
 }
 const maximumContentLength = 32_000;
 
-function MessageForm({ draft, ready, onChange, onSubmit }: MessageFormProps): ReactElement {
+function MessageForm({
+  draft,
+  ready,
+  onChange,
+  onSubmit,
+}: MessageFormProps): ReactElement {
   return (
-    <form className="flex gap-2 border-t border-neutral-200 pt-3" onSubmit={onSubmit}>
+    <form
+      className="flex gap-2 border-t border-neutral-200 pt-3"
+      onSubmit={onSubmit}
+    >
       <input
         aria-label="Message"
         className="min-w-0 flex-1 border border-neutral-300 p-2"

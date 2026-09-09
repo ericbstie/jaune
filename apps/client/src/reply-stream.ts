@@ -25,7 +25,10 @@ async function readReply(
   const decoder = new TextDecoder();
   const state = { buffer: "" };
   for await (const chunk of body) {
-    for (const line of splitLines(state, decoder.decode(chunk, { stream: true }))) {
+    for (const line of splitLines(
+      state,
+      decoder.decode(chunk, { stream: true }),
+    )) {
       const event: unknown = JSON.parse(line);
       const message = readEvent(event, onDelta);
       if (message !== undefined) {

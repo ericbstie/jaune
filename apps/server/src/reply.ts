@@ -56,7 +56,11 @@ async function lockHistory(database: SQL, options: ReplyOptions): Promise<Messag
   return messages;
 }
 
-async function insertReply(database: SQL, conversationId: string, content: string): Promise<Message> {
+async function insertReply(
+  database: SQL,
+  conversationId: string,
+  content: string,
+): Promise<Message> {
   const [message] = await database<Message[]>`
     INSERT INTO message (conversation_id, content, role) VALUES (${conversationId}, ${content}, 'assistant')
     RETURNING id::text, content, role
@@ -96,7 +100,9 @@ function streamReply(
       try {
         const message = await persistReply({
           ...options,
-          onDelta: (delta) => { emit({ delta }); },
+          onDelta: (delta) => {
+            emit({ delta });
+          },
           signal,
         });
         emit({ message });
@@ -113,7 +119,12 @@ function streamReply(
 }
 
 function readMessageId(body: unknown): string | null {
-  if (typeof body !== "object" || body === null || !("messageId" in body) || typeof body.messageId !== "string") {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("messageId" in body) ||
+    typeof body.messageId !== "string"
+  ) {
     return null;
   }
   return body.messageId;

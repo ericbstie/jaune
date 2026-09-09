@@ -18,11 +18,9 @@ function MessagePanel({
   onBusy,
 }: MessagePanelProps): ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [status, setStatus] = useState({ error: "", reply: "" });
+  const [status, setStatus] = useState({ error: "", ready: false, reply: "", sending: false });
   const abort = useRef<AbortController | null>(null);
   const [draft, setDraft] = useState("");
-  const [ready, setReady] = useState(false);
-  const [sending, setSending] = useState(false);
   useEffect(() => {
     let active = true;
     async function load(): Promise<void> {
@@ -30,11 +28,14 @@ function MessagePanel({
         const items = await client.messages(conversationId);
         if (active) {
           setMessages(items);
-          setReady(true);
+          setStatus((current) => ({ ...current, ready: true }));
         }
       } catch {
         if (active) {
-          setStatus((current) => ({ ...current, error: "Could not load messages." }));
+          setStatus((current) => ({
+            ...current,
+            error: "Could not load messages.",
+          }));
         }
       }
     }
@@ -59,14 +60,8 @@ function MessagePanel({
       signal,
     });
     setMessages((items) => [...items, assistant]);
-    setStatus({ error: "", reply: "" });
+    setStatus((current) => ({ ...current, error: "", reply: "" }));
     await onSent();
-  }
-  function finish(): void {
-    setStatus((current) => ({ ...current, reply: "" }));
-    abort.current = null;
-    setSending(false);
-    onBusy(false);
   }
   async function persist(): Promise<void> {
     const controller = new AbortController();
@@ -75,26 +70,32 @@ function MessagePanel({
       const message = await saveDraft();
       await answer(message, controller.signal);
     } catch {
-      setStatus({ error: "Could not complete reply.", reply: "" });
+      setStatus((current) => ({ ...current, error: "Could not complete reply.", reply: "" }));
     } finally {
-      finish();
+      setStatus((current) => ({ ...current, reply: "", sending: false }));
+      abort.current = null;
+      onBusy(false);
     }
   }
   function send(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
-    if (draft.trim().length === 0 || sending || !ready) {
+    if (draft.trim().length === 0 || status.sending || !status.ready) {
       return;
     }
-    setSending(true);
+    setStatus((current) => ({ ...current, error: "", reply: "", sending: true }));
     onBusy(true);
-    setStatus({ error: "", reply: "" });
     void persist();
   }
   return (
     <>
-      <MessageList messages={messages} ready={ready} reply={status.reply} />
+      <MessageList messages={messages} ready={status.ready} reply={status.reply} />
       {status.error.length > 0 && <p role="alert">{status.error}</p>}
-      <MessageForm draft={draft} ready={ready && !sending} onChange={setDraft} onSubmit={send} />
+      <MessageForm
+        draft={draft}
+        ready={status.ready && !status.sending}
+        onChange={setDraft}
+        onSubmit={send}
+      />
     </>
   );
 }

@@ -87,12 +87,20 @@ async function removeConversation(
 
 function conversationRoute(
   request: Request,
-  options: { store: ConversationStore; generate: ReplyProvider; groups: Record<string, string | undefined> },
+  options: {
+    store: ConversationStore;
+    generate: ReplyProvider;
+    groups: Record<string, string | undefined>;
+  },
 ): Promise<Response> | Response {
   const conversationId = options.groups["id"] ?? "";
 
   if (options.groups["action"] === "/reply") {
-    return replyRoute(request, { store: options.store, conversationId, generate: options.generate });
+    return replyRoute(request, {
+      conversationId,
+      generate: options.generate,
+      store: options.store,
+    });
   }
   if (options.groups["action"] === "/messages") {
     return messageRoute(request, options.store, conversationId);

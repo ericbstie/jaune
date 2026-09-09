@@ -7,14 +7,13 @@ const timeout = 30_000;
 const notFound = 404;
 const conflict = 409;
 
-async function request(
-  fixture: TestServer,
-  path: string,
-  body?: unknown,
-): Promise<Response> {
+async function request(fixture: TestServer, path: string, body?: unknown): Promise<Response> {
   return await fetch(new URL(`/api/conversations${path}`, fixture.server.url), {
     body: body === undefined ? null : JSON.stringify(body),
-    headers: { Authorization: `Bearer ${fixture.session.token}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${fixture.session.token}`,
+      "Content-Type": "application/json",
+    },
     method: body === undefined ? "GET" : "POST",
   });
 }
@@ -37,7 +36,10 @@ test(
   "streams before completion, persists roles and rejects duplicate and foreign replies",
   async () => {
     const release = Promise.withResolvers<boolean>();
-    async function* generate(messages: readonly PromptMessage[], signal: AbortSignal): AsyncGenerator<string> {
+    async function* generate(
+      messages: readonly PromptMessage[],
+      signal: AbortSignal,
+    ): AsyncGenerator<string> {
       expect(messages).toEqual([{ content: "Hello", role: "user" }]);
       signal.throwIfAborted();
       yield "First ";
@@ -48,7 +50,9 @@ test(
     try {
       const { id, messageId } = await seed(fixture);
       const path = `/${id}/reply`;
-      const foreign = await request({ ...fixture, session: fixture.otherSession }, path, { messageId });
+      const foreign = await request({ ...fixture, session: fixture.otherSession }, path, {
+        messageId,
+      });
       expect(foreign.status).toBe(notFound);
       const response = await request(fixture, path, { messageId });
       const reader = response.body?.getReader();
@@ -100,7 +104,9 @@ test(
       expect(await response.text()).toContain('"error":');
       const history = await request(fixture, `/${id}/messages`);
       expect(await history.json()).toMatchObject([{ content: "Hello", role: "user" }]);
-      const rows = await fixture.database<{ id: string }[]>`SELECT id FROM message WHERE role = 'assistant'`;
+      const rows = await fixture.database<
+        { id: string }[]
+      >`SELECT id FROM message WHERE role = 'assistant'`;
       expect(rows).toHaveLength(0);
     } finally {
       await fixture.close();

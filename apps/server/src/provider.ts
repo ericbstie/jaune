@@ -14,7 +14,12 @@ interface ProviderConfig {
 }
 
 function readContent(delta: unknown): string {
-  if (typeof delta !== "object" || delta === null || !("content" in delta) || delta.content === null) {
+  if (
+    typeof delta !== "object" ||
+    delta === null ||
+    !("content" in delta) ||
+    delta.content === null
+  ) {
     return "";
   }
   if (typeof delta.content !== "string") {
@@ -48,17 +53,17 @@ async function openStream(
   messages: readonly PromptMessage[],
   signal: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
-    const response = await config.fetch("https://openrouter.ai/api/v1/chat/completions", {
-      body: JSON.stringify({ messages, model: config.model, stream: true }),
-      headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
-      method: "POST",
-      signal,
-    });
-    if (!response.ok || response.body === null) {
-      await response.body?.cancel();
-      throw new Error(`Provider request failed: ${response.status}`);
-    }
-    return response.body;
+  const response = await config.fetch("https://openrouter.ai/api/v1/chat/completions", {
+    body: JSON.stringify({ messages, model: config.model, stream: true }),
+    headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
+    method: "POST",
+    signal,
+  });
+  if (!response.ok || response.body === null) {
+    await response.body?.cancel();
+    throw new Error(`Provider request failed: ${response.status}`);
+  }
+  return response.body;
 }
 
 function createProvider(config: ProviderConfig): ReplyProvider {

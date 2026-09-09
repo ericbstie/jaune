@@ -93,7 +93,11 @@ function createClient(
   }
   async function reply(
     id: string,
-    options: { messageId: string; onDelta: (delta: string) => void; signal: AbortSignal },
+    options: {
+      messageId: string;
+      onDelta: (delta: string) => void;
+      signal: AbortSignal;
+    },
   ): Promise<Message> {
     const response = await requestResponse(`/${id}/reply`, {
       body: JSON.stringify({ messageId: options.messageId }),
