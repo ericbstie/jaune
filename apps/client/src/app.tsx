@@ -7,16 +7,24 @@ import type { ReactElement } from "react";
 interface AppProps {
   client: Client;
   openURL: (url: string) => Promise<void>;
+  mockAuthentication: boolean;
 }
 
-function App({ client, openURL }: AppProps): ReactElement {
-  const [signedIn, setSignedIn] = useState(false);
-  const [checking, setChecking] = useState(true);
+function App({
+  client,
+  openURL,
+  mockAuthentication,
+}: AppProps): ReactElement {
+  const [signedIn, setSignedIn] = useState(mockAuthentication);
+  const [checking, setChecking] = useState(!mockAuthentication);
   const [error, setError] = useState("");
   const completeSignIn = useCallback(() => {
     setSignedIn(true);
   }, []);
   useEffect(() => {
+    if (mockAuthentication) {
+      return;
+    }
     let active = true;
     async function check(): Promise<void> {
       try {
@@ -41,8 +49,12 @@ function App({ client, openURL }: AppProps): ReactElement {
     return (): void => {
       active = false;
     };
-  }, [client]);
+  }, [client, mockAuthentication]);
   async function signOut(): Promise<void> {
+    if (mockAuthentication) {
+      setSignedIn(false);
+      return;
+    }
     try {
       const result = await client.auth.signOut();
       if (result.error) {
@@ -60,6 +72,7 @@ function App({ client, openURL }: AppProps): ReactElement {
       error={error}
       signedIn={signedIn}
       client={client}
+      mockAuthentication={mockAuthentication}
       openURL={openURL}
       onSignedIn={completeSignIn}
       onSignOut={() => {

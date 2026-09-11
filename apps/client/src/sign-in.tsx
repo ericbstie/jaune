@@ -7,6 +7,7 @@ interface SignInProps {
   client: Client;
   openURL: (url: string) => Promise<void>;
   onSignedIn: () => void;
+  mockAuthentication: boolean;
 }
 interface PendingSignIn {
   deviceCode: string;
@@ -138,7 +139,12 @@ async function beginSignIn(
   };
 }
 
-function SignIn({ client, openURL, onSignedIn }: SignInProps): ReactElement {
+function SignIn({
+  client,
+  openURL,
+  onSignedIn,
+  mockAuthentication,
+}: SignInProps): ReactElement {
   const [pending, setPending] = useState<PendingSignIn | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -163,6 +169,10 @@ function SignIn({ client, openURL, onSignedIn }: SignInProps): ReactElement {
     setBusy(true);
     setError("");
     try {
+      if (mockAuthentication) {
+        onSignedIn();
+        return;
+      }
       setPending(await beginSignIn(client, openURL, Date.now));
     } catch {
       setError("Sign-in failed.");

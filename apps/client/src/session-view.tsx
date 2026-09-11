@@ -11,6 +11,7 @@ interface SessionViewProps {
   openURL: (url: string) => Promise<void>;
   onSignedIn: () => void;
   onSignOut: () => void;
+  mockAuthentication: boolean;
 }
 function SessionView({
   checking,
@@ -20,6 +21,7 @@ function SessionView({
   openURL,
   onSignedIn,
   onSignOut,
+  mockAuthentication,
 }: SessionViewProps): ReactElement {
   if (checking) {
     return <main />;
@@ -41,6 +43,13 @@ function SessionView({
       />
     );
   }
-  return <SignIn client={client} openURL={openURL} onSignedIn={onSignedIn} />;
+  return (
+    <SignIn
+      client={client}
+      openURL={openURL}
+      onSignedIn={onSignedIn}
+      mockAuthentication={mockAuthentication}
+    />
+  );
 }
 export { SessionView };

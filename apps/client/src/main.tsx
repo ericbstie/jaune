@@ -5,10 +5,15 @@ import { App } from "./app";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+const mockAuthentication =
+  process.env["BUN_PUBLIC_BUILD_MODE"] === "test" &&
+  process.env["BUN_PUBLIC_MOCK_AUTH"] === "true";
+
 const client = createClient(
   process.env["BUN_PUBLIC_SERVER_URL"] ?? "http://localhost:3000",
   sessionStorage,
   fetch,
+  mockAuthentication,
 );
 async function openSignIn(url: string): Promise<void> {
   if (isTauri()) {
@@ -24,6 +29,10 @@ if (root === null) {
 }
 createRoot(root).render(
   <StrictMode>
-    <App client={client} openURL={openSignIn} />
+    <App
+      client={client}
+      openURL={openSignIn}
+      mockAuthentication={mockAuthentication}
+    />
   </StrictMode>,
 );

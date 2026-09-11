@@ -39,6 +39,10 @@ run = "mise run web:css:watch ::: web:serve"
 depends = ["web:css"]
 run = "cd apps/client && bun build src/index.html --outdir dist --production --env BUN_PUBLIC_*"
 
+[tasks."web:build:test"]
+depends = ["web:css"]
+run = "cd apps/client && BUN_PUBLIC_BUILD_MODE=test BUN_PUBLIC_MOCK_AUTH=true bun build src/index.html --outdir dist --production --env BUN_PUBLIC_*"
+
 [tasks.dev]
 run = "cd apps/client && cargo tauri dev"
 
