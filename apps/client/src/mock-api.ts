@@ -20,6 +20,9 @@ const conversationsPath = "/api/conversations";
 const messagesPath = "/messages";
 const sessionPath = "/api/auth/get-session";
 const signOutPath = "/api/auth/sign-out";
+const statusOk = 200;
+const statusNotFound = 404;
+const statusMethodNotAllowed = 405;
 
 function createMockState(): MockState {
   const conversation = {
@@ -38,7 +41,7 @@ function createMockState(): MockState {
   };
 }
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = statusOk): Response {
   return Response.json(body, { status });
 }
 
@@ -60,7 +63,7 @@ function getMethod(
 }
 
 function getConversationId(path: string): string | null {
-  const prefix = conversationsPath + "/";
+  const prefix = `${conversationsPath}/`;
   if (!path.startsWith(prefix) || !path.endsWith(messagesPath)) {
     return null;
   }
@@ -77,6 +80,17 @@ function isMessagePayload(value: unknown): value is { content: string } {
   );
 }
 
+function readMessageContent(body: BodyInit | null | undefined): string {
+  if (typeof body !== "string") {
+    throw new TypeError("Invalid mock message request");
+  }
+  const payload: unknown = JSON.parse(body);
+  if (!isMessagePayload(payload)) {
+    throw new TypeError("Invalid mock message");
+  }
+  return payload.content;
+}
+
 function createConversation(state: MockState): Conversation {
   const conversation = {
     id: `mock-conversation-${state.nextConversationId}`,
@@ -88,20 +102,13 @@ function createConversation(state: MockState): Conversation {
   return conversation;
 }
 
-async function createMessage(
+function createMessage(
   state: MockState,
   conversationId: string,
   body: BodyInit | null | undefined,
-): Promise<Message> {
-  if (typeof body !== "string") {
-    throw new TypeError("Invalid mock message request");
-  }
-  const payload: unknown = JSON.parse(body);
-  if (!isMessagePayload(payload)) {
-    throw new TypeError("Invalid mock message");
-  }
+): Message {
   const message = {
-    content: payload.content,
+    content: readMessageContent(body),
     id: `mock-message-${state.nextMessageId}`,
   };
   state.nextMessageId += 1;
@@ -111,54 +118,77 @@ async function createMessage(
   return message;
 }
 
-async function handleRequest({
-  body,
-  method,
-  path,
-  state,
-}: MockRequest): Promise<Response> {
-  if (path === conversationsPath && method === "GET") {
+function handleConversationsRequest(
+  state: MockState,
+  method: string,
+): Response {
+  if (method === "GET") {
     return jsonResponse(state.conversations);
   }
-  if (path === conversationsPath && method === "POST") {
+  if (method === "POST") {
     return jsonResponse(createConversation(state));
   }
-  const conversationId = getConversationId(path);
-  if (conversationId === null) {
-    return jsonResponse({ error: "Not found" }, 404);
-  }
+  return jsonResponse({ error: "Method not allowed" }, statusMethodNotAllowed);
+}
+
+function handleMessagesRequest(
+  state: MockState,
+  conversationId: string,
+  method: string,
+  body: BodyInit | null | undefined,
+): Response {
   if (method === "GET") {
     return jsonResponse(state.messages.get(conversationId) ?? []);
   }
   if (method === "POST") {
-    return jsonResponse(await createMessage(state, conversationId, body));
+    return jsonResponse(createMessage(state, conversationId, body));
   }
-  return jsonResponse({ error: "Method not allowed" }, 405);
+  return jsonResponse({ error: "Method not allowed" }, statusMethodNotAllowed);
+}
+
+function handleRequest({
+  body,
+  method,
+  path,
+  state,
+}: MockRequest): Response {
+  if (path === conversationsPath) {
+    return handleConversationsRequest(state, method);
+  }
+  const conversationId = getConversationId(path);
+  if (conversationId === null) {
+    return jsonResponse({ error: "Not found" }, statusNotFound);
+  }
+  return handleMessagesRequest(state, conversationId, method, body);
 }
 
 function createMockFetch(): typeof fetch {
   const state = createMockState();
-  const mockFetch = async (
+  function mockFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
-  ): Promise<Response> => {
+  ): Promise<Response> {
     const path = getPath(input);
     if (path === sessionPath) {
-      return jsonResponse({
-        session: { id: "mock-session" },
-        user: { id: "mock-user" },
-      });
+      return Promise.resolve(
+        jsonResponse({
+          session: { id: "mock-session" },
+          user: { id: "mock-user" },
+        }),
+      );
     }
     if (path === signOutPath) {
-      return jsonResponse({});
+      return Promise.resolve(jsonResponse({}));
     }
-    return handleRequest({
-      body: init?.body,
-      method: getMethod(input, init),
-      path,
-      state,
-    });
-  };
+    return Promise.resolve(
+      handleRequest({
+        body: init?.body,
+        method: getMethod(input, init),
+        path,
+        state,
+      }),
+    );
+  }
   return Object.assign(mockFetch, { preconnect: fetch.preconnect });
 }
 
