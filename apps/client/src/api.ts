@@ -22,18 +22,11 @@ interface MockState {
 
 function createMockState(): MockState {
   return {
-    conversations: [
-      { id: mockConversationId, title: "Mock conversation" },
-    ],
+    conversations: [{ id: mockConversationId, title: "Mock conversation" }],
     messages: new Map([
       [
         mockConversationId,
-        [
-          {
-            id: mockMessageId,
-            content: "Mock authentication is enabled.",
-          },
-        ],
+        [{ id: mockMessageId, content: "Mock authentication is enabled." }],
       ],
     ]),
     nextConversationId: 1,

@@ -10,11 +10,7 @@ interface AppProps {
   mockAuthentication: boolean;
 }
 
-function App({
-  client,
-  openURL,
-  mockAuthentication,
-}: AppProps): ReactElement {
+function App({ client, openURL, mockAuthentication }: AppProps): ReactElement {
   const [signedIn, setSignedIn] = useState(mockAuthentication);
   const [checking, setChecking] = useState(!mockAuthentication);
   const [error, setError] = useState("");
