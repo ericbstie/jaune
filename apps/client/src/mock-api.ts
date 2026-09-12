@@ -68,9 +68,7 @@ function getConversationId(path: string): string | null {
   return conversationId.length > 0 ? conversationId : null;
 }
 
-function isMessagePayload(
-  value: unknown,
-): value is { content: string } {
+function isMessagePayload(value: unknown): value is { content: string } {
   return (
     typeof value === "object" &&
     value !== null &&
