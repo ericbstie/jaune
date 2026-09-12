@@ -176,7 +176,7 @@ function createMockFetch(): typeof fetch {
     init?: RequestInit,
   ): Promise<Response> {
     const path = getPath(input);
-    let response: Response;
+    let response = jsonResponse({});
     if (path === sessionPath) {
       response = jsonResponse({
         session: { id: "mock-session" },
