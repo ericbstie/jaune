@@ -138,7 +138,10 @@ async function handleRequest({
 
 function createMockFetch(): typeof fetch {
   const state = createMockState();
-  return async (input, init): Promise<Response> => {
+  const mockFetch = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
     const path = getPath(input);
     if (path === sessionPath) {
       return jsonResponse({
@@ -156,6 +159,7 @@ function createMockFetch(): typeof fetch {
       state,
     });
   };
+  return Object.assign(mockFetch, { preconnect: fetch.preconnect });
 }
 
 export { createMockFetch };
