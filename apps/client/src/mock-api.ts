@@ -176,23 +176,25 @@ function createMockFetch(): typeof fetch {
     init?: RequestInit,
   ): Promise<Response> {
     const path = getPath(input);
-    let response = jsonResponse({});
     if (path === sessionPath) {
-      response = jsonResponse({
-        session: { id: "mock-session" },
-        user: { id: "mock-user" },
-      });
-    } else if (path === signOutPath) {
-      response = jsonResponse({});
-    } else {
-      response = handleRequest({
+      return await Promise.resolve(
+        jsonResponse({
+          session: { id: "mock-session" },
+          user: { id: "mock-user" },
+        }),
+      );
+    }
+    if (path === signOutPath) {
+      return await Promise.resolve(jsonResponse({}));
+    }
+    return await Promise.resolve(
+      handleRequest({
         body: init?.body,
         method: getMethod(input, init),
         path,
         state,
-      });
-    }
-    return await Promise.resolve(response);
+      }),
+    );
   }
   return Object.assign(mockFetch, { preconnect: fetch.preconnect });
 }
