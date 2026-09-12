@@ -10,82 +10,6 @@ interface Message {
   content: string;
 }
 const sessionKey = "jaune.session";
-const mockConversationId = "mock-conversation";
-const mockMessageId = "mock-message";
-
-interface MockState {
-  conversations: Conversation[];
-  messages: Map<string, Message[]>;
-  nextConversationId: number;
-  nextMessageId: number;
-}
-
-function createMockState(): MockState {
-  return {
-    conversations: [{ id: mockConversationId, title: "Mock conversation" }],
-    messages: new Map([
-      [
-        mockConversationId,
-        [{ id: mockMessageId, content: "Mock authentication is enabled." }],
-      ],
-    ]),
-    nextConversationId: 1,
-    nextMessageId: 1,
-  };
-}
-
-function mockRequest(
-  state: MockState,
-  path: string,
-  options: RequestInit,
-): unknown {
-  const method = options.method ?? "GET";
-  if (path === "") {
-    if (method === "GET") {
-      return state.conversations;
-    }
-    if (method === "POST") {
-      const conversation = {
-        id: "mock-conversation-" + state.nextConversationId,
-        title: "New conversation",
-      };
-      state.nextConversationId += 1;
-      state.conversations.unshift(conversation);
-      state.messages.set(conversation.id, []);
-      return conversation;
-    }
-  }
-  const messagePath = "/messages";
-  if (!path.startsWith("/") || !path.endsWith(messagePath)) {
-    throw new Error("Unsupported mock request");
-  }
-  const conversationId = path.slice(1, -messagePath.length);
-  if (conversationId.length === 0) {
-    throw new Error("Invalid mock conversation");
-  }
-  if (method === "GET") {
-    return state.messages.get(conversationId) ?? [];
-  }
-  if (method === "POST") {
-    if (typeof options.body !== "string") {
-      throw new Error("Invalid mock message request");
-    }
-    const body = JSON.parse(options.body) as { content?: unknown };
-    if (typeof body.content !== "string") {
-      throw new Error("Invalid mock message");
-    }
-    const message = {
-      id: "mock-message-" + state.nextMessageId,
-      content: body.content,
-    };
-    state.nextMessageId += 1;
-    const messages = state.messages.get(conversationId) ?? [];
-    messages.push(message);
-    state.messages.set(conversationId, messages);
-    return message;
-  }
-  throw new Error("Unsupported mock request");
-}
 
 function parseConversation(value: unknown): Conversation {
   if (
@@ -129,7 +53,6 @@ function createClient(
   baseURL: string,
   storage: Storage,
   fetchImpl: typeof fetch,
-  mockAuthentication = false,
 ) {
   const auth = createAuthClient({
     baseURL,
@@ -140,14 +63,10 @@ function createClient(
     },
     plugins: [deviceAuthorizationClient()],
   });
-  const mockState = mockAuthentication ? createMockState() : null;
   async function request(
     path: string,
     options: RequestInit = {},
   ): Promise<unknown> {
-    if (mockState !== null) {
-      return mockRequest(mockState, path, options);
-    }
     const headers = new Headers({
       Authorization: `Bearer ${storage.getItem(sessionKey) ?? ""}`,
       "Content-Type": "application/json",
