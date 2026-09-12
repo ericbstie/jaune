@@ -14,6 +14,13 @@ interface MockRequest {
   state: MockState;
 }
 
+interface MockMessageRequest {
+  body: BodyInit | null | undefined;
+  conversationId: string;
+  method: string;
+  state: MockState;
+}
+
 const mockConversationId = "mock-conversation";
 const mockMessageId = "mock-message";
 const conversationsPath = "/api/conversations";
@@ -131,12 +138,12 @@ function handleConversationsRequest(
   return jsonResponse({ error: "Method not allowed" }, statusMethodNotAllowed);
 }
 
-function handleMessagesRequest(
-  state: MockState,
-  conversationId: string,
-  method: string,
-  body: BodyInit | null | undefined,
-): Response {
+function handleMessagesRequest({
+  body,
+  conversationId,
+  method,
+  state,
+}: MockMessageRequest): Response {
   if (method === "GET") {
     return jsonResponse(state.messages.get(conversationId) ?? []);
   }
@@ -154,35 +161,38 @@ function handleRequest({ body, method, path, state }: MockRequest): Response {
   if (conversationId === null) {
     return jsonResponse({ error: "Not found" }, statusNotFound);
   }
-  return handleMessagesRequest(state, conversationId, method, body);
+  return handleMessagesRequest({
+    body,
+    conversationId,
+    method,
+    state,
+  });
 }
 
 function createMockFetch(): typeof fetch {
   const state = createMockState();
-  function mockFetch(
+  async function mockFetch(
     input: RequestInfo | URL,
     init?: RequestInit,
   ): Promise<Response> {
     const path = getPath(input);
+    let response: Response;
     if (path === sessionPath) {
-      return Promise.resolve(
-        jsonResponse({
-          session: { id: "mock-session" },
-          user: { id: "mock-user" },
-        }),
-      );
-    }
-    if (path === signOutPath) {
-      return Promise.resolve(jsonResponse({}));
-    }
-    return Promise.resolve(
-      handleRequest({
+      response = jsonResponse({
+        session: { id: "mock-session" },
+        user: { id: "mock-user" },
+      });
+    } else if (path === signOutPath) {
+      response = jsonResponse({});
+    } else {
+      response = handleRequest({
         body: init?.body,
         method: getMethod(input, init),
         path,
         state,
-      }),
-    );
+      });
+    }
+    return await Promise.resolve(response);
   }
   return Object.assign(mockFetch, { preconnect: fetch.preconnect });
 }
