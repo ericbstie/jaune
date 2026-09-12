@@ -55,10 +55,7 @@ function getPath(input: RequestInfo | URL): string {
   return new URL(input).pathname;
 }
 
-function getMethod(
-  input: RequestInfo | URL,
-  init: RequestInit | undefined,
-): string {
+function getMethod(input: RequestInfo | URL, init: RequestInit | undefined): string {
   return init?.method ?? (input instanceof Request ? input.method : "GET");
 }
 
@@ -118,10 +115,7 @@ function createMessage(
   return message;
 }
 
-function handleConversationsRequest(
-  state: MockState,
-  method: string,
-): Response {
+function handleConversationsRequest(state: MockState, method: string): Response {
   if (method === "GET") {
     return jsonResponse(state.conversations);
   }
@@ -146,12 +140,7 @@ function handleMessagesRequest(
   return jsonResponse({ error: "Method not allowed" }, statusMethodNotAllowed);
 }
 
-function handleRequest({
-  body,
-  method,
-  path,
-  state,
-}: MockRequest): Response {
+function handleRequest({ body, method, path, state }: MockRequest): Response {
   if (path === conversationsPath) {
     return handleConversationsRequest(state, method);
   }
@@ -164,10 +153,7 @@ function handleRequest({
 
 function createMockFetch(): typeof fetch {
   const state = createMockState();
-  function mockFetch(
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ): Promise<Response> {
+  function mockFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const path = getPath(input);
     if (path === sessionPath) {
       return Promise.resolve(
