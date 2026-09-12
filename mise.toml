@@ -16,6 +16,8 @@ node = "24.20.0"
 
 [env]
 BUN_PUBLIC_SERVER_URL = "http://localhost:3000"
+BUN_PUBLIC_BUILD_MODE = "production"
+BUN_PUBLIC_MOCK_AUTH = "false"
 RUST_BACKTRACE = "1"
 CARGO_TERM_COLOR = "always"
 
